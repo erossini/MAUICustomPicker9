@@ -12,62 +12,88 @@ namespace CustomPicker.Components
 {
     public class EntryBox : Microsoft.Maui.Controls.ContentView
     {
-        public static readonly BindableProperty TextProperty =
-            BindableProperty.Create(nameof(Text), typeof(string), typeof(EntryBox), default(string), BindingMode.TwoWay, propertyChanged: OnTextChanged);
+        #region Bindle Properties
 
-        public static readonly BindableProperty PlaceholderTextProperty =
-            BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(EntryBox), "Enter text...");
+        public static readonly BindableProperty ClearValidIconSourceProperty =
+            BindableProperty.Create(nameof(EntryBox), typeof(ImageSource), typeof(EntryBox),
+                ImageSource.FromFile("clear_icon_valid.png"));
+
+        public static readonly BindableProperty ClearInvalidIconSourceProperty =
+            BindableProperty.Create(nameof(EntryBox), typeof(ImageSource), typeof(EntryBox),
+                ImageSource.FromFile("clear_icon_invalid.png"));
+
+        public static readonly BindableProperty ClearUnknownIconSourceProperty =
+            BindableProperty.Create(nameof(EntryBox), typeof(ImageSource), typeof(EntryBox),
+                ImageSource.FromFile("clear_icon_unknown.png"));
+
+        public static readonly BindableProperty IsValidProperty =
+            BindableProperty.Create(nameof(IsValid), typeof(bool?), typeof(EntryBox),
+                null, BindingMode.OneWayToSource);
+
+        public static readonly BindableProperty MustNotEmptyProperty =
+            BindableProperty.Create( nameof(MustNotEmpty), typeof(bool), typeof(EntryBox),
+                false, propertyChanged: OnMustNotEmptyChanged);
 
         public static readonly BindableProperty PlaceholderColorProperty =
             BindableProperty.Create(nameof(PlaceholderColor), typeof(Color), typeof(EntryBox), Colors.Gray);
 
-        public static readonly BindableProperty SelectedColorProperty =
-            BindableProperty.Create(nameof(SelectedColor), typeof(Color), typeof(EntryBox), Colors.Green);
+        public static readonly BindableProperty PlaceholderTextProperty =
+            BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(EntryBox), "Enter text...");
 
         public static readonly BindableProperty RequiredColorProperty =
             BindableProperty.Create(nameof(RequiredColor), typeof(Color), typeof(EntryBox), Colors.Red);
 
-        public static readonly BindableProperty ClearButtonSourceProperty =
-            BindableProperty.Create(nameof(ClearButtonSource), typeof(ImageSource), typeof(EntryBox), ImageSource.FromFile("clear_icon.png"));
+        public static readonly BindableProperty SelectedColorProperty =
+            BindableProperty.Create(nameof(SelectedColor), typeof(Color), typeof(EntryBox), Colors.Green);
+
+        public static readonly BindableProperty TextProperty =
+            BindableProperty.Create(nameof(Text), typeof(string), typeof(EntryBox), default(string), BindingMode.TwoWay, 
+                propertyChanged: OnTextChanged);
 
         public static readonly BindableProperty ValidationRuleProperty =
-            BindableProperty.Create(
-                nameof(ValidationRule),
-                typeof(Func<string, bool>),
-                typeof(EntryBox),
-                null,
-                propertyChanged: OnValidationRuleChanged);
+            BindableProperty.Create(nameof(ValidationRule), typeof(Func<string, bool>), typeof(EntryBox),
+                null, propertyChanged: OnValidationRuleChanged);
 
-        public static readonly BindableProperty MustNotEmptyProperty =
-    BindableProperty.Create(
-        nameof(MustNotEmpty),
-        typeof(bool),
-        typeof(EntryBox), // Replace with your actual control class name
-        false,
-        propertyChanged: OnMustNotEmptyChanged);
+        public ImageSource CurrentValidationIcon =>
+            IsValid == true ? ClearValidIconSource : IsValid == false ? ClearInvalidIconSource : ClearUnknownIconSource;
+
+        public ImageSource ClearValidIconSource
+        {
+            get => (ImageSource)GetValue(ClearValidIconSourceProperty);
+            set => SetValue(ClearValidIconSourceProperty, value);
+        }
+
+        public ImageSource ClearInvalidIconSource
+        {
+            get => (ImageSource)GetValue(ClearInvalidIconSourceProperty);
+            set => SetValue(ClearInvalidIconSourceProperty, value);
+        }
+
+        public ImageSource ClearUnknownIconSource
+        {
+            get => (ImageSource)GetValue(ClearUnknownIconSourceProperty);
+            set => SetValue(ClearUnknownIconSourceProperty, value);
+        }
+
+        private bool? _isValid;
+        public bool? IsValid
+        {
+            get => _isValid;
+            set
+            {
+                if (_isValid != value)
+                {
+                    _isValid = value;
+                    OnPropertyChanged(nameof(IsValid));
+                    OnPropertyChanged(nameof(CurrentValidationIcon));
+                }
+            }
+        }
 
         public bool MustNotEmpty
         {
             get => (bool)GetValue(MustNotEmptyProperty);
             set => SetValue(MustNotEmptyProperty, value);
-        }
-
-        public Func<string, bool>? ValidationRule
-        {
-            get => (Func<string, bool>?)GetValue(ValidationRuleProperty);
-            set => SetValue(ValidationRuleProperty, value);
-        }
-
-        public string Text
-        {
-            get => (string)GetValue(TextProperty);
-            set => SetValue(TextProperty, value);
-        }
-
-        public string PlaceholderText
-        {
-            get => (string)GetValue(PlaceholderTextProperty);
-            set => SetValue(PlaceholderTextProperty, value);
         }
 
         public Color PlaceholderColor
@@ -76,10 +102,10 @@ namespace CustomPicker.Components
             set => SetValue(PlaceholderColorProperty, value);
         }
 
-        public Color SelectedColor
+        public string PlaceholderText
         {
-            get => (Color)GetValue(SelectedColorProperty);
-            set => SetValue(SelectedColorProperty, value);
+            get => (string)GetValue(PlaceholderTextProperty);
+            set => SetValue(PlaceholderTextProperty, value);
         }
 
         public Color RequiredColor
@@ -88,17 +114,35 @@ namespace CustomPicker.Components
             set => SetValue(RequiredColorProperty, value);
         }
 
-        public ImageSource ClearButtonSource
+        public Color SelectedColor
         {
-            get => (ImageSource)GetValue(ClearButtonSourceProperty);
-            set => SetValue(ClearButtonSourceProperty, value);
+            get => (Color)GetValue(SelectedColorProperty);
+            set => SetValue(SelectedColorProperty, value);
         }
 
-        private readonly Entry _entry;
+        public string Text
+        {
+            get => (string)GetValue(TextProperty);
+            set => SetValue(TextProperty, value);
+        }
+
+        public Func<string, bool>? ValidationRule
+        {
+            get => (Func<string, bool>?)GetValue(ValidationRuleProperty);
+            set => SetValue(ValidationRuleProperty, value);
+        }
+
+        #endregion Bindle Properties
+
+        #region Variables
+
         private readonly Border _border;
         private readonly ImageButton _clearButton;
+        private readonly Entry _entry;
         private bool _hasPulsedRequired = false;
         private bool _wasCleared = false;
+
+        #endregion Variables
 
         public EntryBox()
         {
@@ -107,7 +151,8 @@ namespace CustomPicker.Components
                 Placeholder = PlaceholderText,
                 VerticalOptions = LayoutOptions.Center,
                 HorizontalOptions = LayoutOptions.FillAndExpand,
-                BackgroundColor = Colors.Transparent
+                BackgroundColor = Colors.Transparent,
+                Margin = new Thickness(3, 0, 0, 0)
             };
             _entry.HandlerChanged += (s, e) => UpdateCursorColor(null);
             _entry.SetBinding(Entry.TextProperty, new Binding(nameof(Text), source: this, mode: BindingMode.TwoWay));
@@ -126,7 +171,7 @@ namespace CustomPicker.Components
                 HorizontalOptions = LayoutOptions.End,
                 VerticalOptions = LayoutOptions.Center
             };
-            _clearButton.SetBinding(Image.SourceProperty, new Binding(nameof(ClearButtonSource), source: this));
+            _clearButton.SetBinding(Image.SourceProperty, new Binding(nameof(CurrentValidationIcon), source: this));
             _clearButton.Clicked += (s, e) =>
             {
                 Text = string.Empty;
@@ -160,12 +205,10 @@ namespace CustomPicker.Components
             UpdateVisuals();
         }
 
-        private static void OnValidationRuleChanged(BindableObject bindable, object oldValue, object newValue)
+        private static void OnMustNotEmptyChanged(BindableObject bindable, object oldValue, object newValue)
         {
-            if (bindable is EntryBox entryBox)
-            {
-                entryBox.UpdateVisuals();
-            }
+            if (bindable is EntryBox control)
+                control.UpdateVisuals();
         }
 
         private static void OnTextChanged(BindableObject bindable, object oldValue, object newValue)
@@ -174,12 +217,16 @@ namespace CustomPicker.Components
                 box.UpdateVisuals();
         }
 
-        private static void OnMustNotEmptyChanged(BindableObject bindable, object oldValue, object newValue)
+        private static void OnValidationRuleChanged(BindableObject bindable, object oldValue, object newValue)
         {
-            if (bindable is EntryBox control)
-            {
-                control.UpdateVisuals();
-            }
+            if (bindable is EntryBox entryBox)
+                entryBox.UpdateVisuals();
+        }
+
+        private async Task AnimateRequiredPulse()
+        {
+            await _border.ScaleTo(1.05, 150, Easing.CubicOut);
+            await _border.ScaleTo(1.0, 150, Easing.CubicIn);
         }
 
         private void UpdateCursorColor(Color? color)
@@ -188,11 +235,11 @@ namespace CustomPicker.Components
                 color = SelectedColor;
 
 #if ANDROID
-    if (_entry.Handler is EntryHandler handler)
-    {
-        var editText = handler.PlatformView;
-        editText.TextCursorDrawable?.SetTint(color.ToInt());
-    }
+            if (_entry.Handler is EntryHandler handler)
+            {
+                var editText = handler.PlatformView;
+                editText.TextCursorDrawable?.SetTint(color.ToInt());
+            }
 #elif IOS
     if (_entry.Handler is EntryHandler handler)
     {
@@ -210,7 +257,9 @@ namespace CustomPicker.Components
         {
             bool hasText = !string.IsNullOrWhiteSpace(Text);
             bool requiresValidation = MustNotEmpty || ValidationRule != null;
-            bool isValid = ValidationRule?.Invoke(Text ?? string.Empty) ?? hasText;
+            bool isValid = ValidationRule?.Invoke(Text ?? string.Empty) ?? (MustNotEmpty ? hasText : true);
+
+            IsValid = isValid;
 
             Color currentColor = requiresValidation
                 ? (isValid ? SelectedColor : RequiredColor)
@@ -226,22 +275,15 @@ namespace CustomPicker.Components
 
             UpdateCursorColor(currentColor);
 
-            if (requiresValidation && !isValid)
+            if (requiresValidation && !isValid && !_hasPulsedRequired)
             {
-                if (!_hasPulsedRequired)
-                {
-                    _hasPulsedRequired = true;
-                    _ = AnimateRequiredPulse();
-                }
+                _hasPulsedRequired = true;
+                _ = AnimateRequiredPulse();
             }
-            else
+            else if (isValid)
+            {
                 _hasPulsedRequired = false;
-        }
-
-        private async Task AnimateRequiredPulse()
-        {
-            await _border.ScaleTo(1.05, 150, Easing.CubicOut);
-            await _border.ScaleTo(1.0, 150, Easing.CubicIn);
+            }
         }
     }
 }

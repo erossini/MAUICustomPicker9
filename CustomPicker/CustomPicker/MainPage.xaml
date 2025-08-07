@@ -3,7 +3,15 @@
 	x:Class="CustomPicker.MainPage"
 	xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
 	xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-	xmlns:components="clr-namespace:CustomPicker.Components">
+	xmlns:components="clr-namespace:CustomPicker.Components"
+	xmlns:local="clr-namespace:CustomPicker.Converters"
+	xmlns:md="clr-namespace:CustomPicker.Models">
+
+	<ContentPage.Resources>
+		<ResourceDictionary>
+			<local:IsNullConverter x:Key="IsNullConverter" />
+		</ResourceDictionary>
+	</ContentPage.Resources>
 
 	<ScrollView>
 		<VerticalStackLayout Padding="30,0" Spacing="25">
@@ -47,7 +55,32 @@
 				</components:LanguageSelection.ItemTemplate>
 			</components:LanguageSelection>
 
-			<components:LanguageDropDown ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}">
+			<Label Text="Language Dropdown" TextColor="Gray">
+				<Label.Triggers>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference language1}, Path=IsValid}" Value="True" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Green" />
+					</MultiTrigger>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference language1}, Path=IsValid}" Value="False" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Red" />
+					</MultiTrigger>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference language1}, Path=IsValid, Converter={StaticResource IsNullConverter}}" Value="True" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="LightPink" />
+					</MultiTrigger>
+				</Label.Triggers>
+			</Label>
+			<components:LanguageDropDown
+				x:Name="language1"
+				ItemsSource="{Binding Languages}"
+				SelectedItem="{Binding SelectedLanguage}">
 				<components:LanguageDropDown.ItemTemplate>
 					<DataTemplate>
 						<Grid Margin="5,5,5,5">
@@ -73,10 +106,57 @@
 
 			<components:EntryBox Text="{Binding SelectedText}" />
 
-			<components:EntryBox Text="{Binding SelectedText1}" ValidationRule="{Binding TextValidation}" />
+			<Label Text="Entry with validation">
+				<Label.Triggers>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference entryBox1}, Path=IsValid}" Value="True" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Green" />
+					</MultiTrigger>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference entryBox1}, Path=IsValid}" Value="False" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Red" />
+					</MultiTrigger>
+				</Label.Triggers>
+			</Label>
+			<components:EntryBox
+				x:Name="entryBox1"
+				Text="{Binding SelectedText1}"
+				ValidationRule="{Binding TextValidation}" />
 			<Label Text="{Binding SelectedText1}" />
 
-			<components:EntryBox Text="{Binding SelectedText2}" MustNotEmpty="True" />
+			<components:EntryBox MustNotEmpty="True" Text="{Binding SelectedText2}" />
+
+			<Label Text="Picker">
+				<Label.Triggers>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference pickerBox1}, Path=IsValid}" Value="True" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Green" />
+					</MultiTrigger>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference pickerBox1}, Path=IsValid}" Value="False" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Red" />
+					</MultiTrigger>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference pickerBox1}, Path=IsValid, Converter={StaticResource IsNullConverter}}" Value="True" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="LightPink" />
+					</MultiTrigger>
+				</Label.Triggers>
+			</Label>
+			<components:PickerBox
+				x:Name="pickerBox1"
+				x:TypeArguments="md:LanguageModel"
+				DisplayMemberPath="DisplayName"
+				ItemsSource="{Binding Languages}" />
 
 			<Button
 				x:Name="CounterBtn"

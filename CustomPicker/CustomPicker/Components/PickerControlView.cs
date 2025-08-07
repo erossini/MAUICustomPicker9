@@ -78,6 +78,7 @@ namespace CustomPicker.Components
                 }
             };
 
+            this.Margin = 0;
             this.Content = clPickerView;
         }
     }

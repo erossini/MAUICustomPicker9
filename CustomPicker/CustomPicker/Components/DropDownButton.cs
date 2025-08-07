@@ -12,19 +12,27 @@ namespace CustomPicker.Components
     {
         #region Bindable properties
 
-        public static readonly BindableProperty ClearButtonSourceProperty =
-            BindableProperty.Create(
-                nameof(ClearButtonSource),
-                typeof(ImageSource),
-                typeof(DropDownButton<T>),
-                ImageSource.FromFile("clear_icon.png")
-            );
+        public static readonly BindableProperty ClearValidIconSourceProperty =
+            BindableProperty.Create(nameof(ClearValidIconSource), typeof(ImageSource), typeof(DropDownButton<T>),
+                ImageSource.FromFile("clear_icon_valid.png"));
+
+        public static readonly BindableProperty ClearInvalidIconSourceProperty =
+            BindableProperty.Create(nameof(ClearInvalidIconSource), typeof(ImageSource), typeof(DropDownButton<T>),
+                ImageSource.FromFile("clear_icon_invalid.png"));
+
+        public static readonly BindableProperty ClearUnknownIconSourceProperty =
+            BindableProperty.Create(nameof(ClearUnknownIconSource), typeof(ImageSource), typeof(DropDownButton<T>),
+                ImageSource.FromFile("clear_icon_unknown.png"));
 
         public static readonly BindableProperty DisplayMemberProperty =
             BindableProperty.Create(nameof(DisplayMember), typeof(string), typeof(DropDownButton<T>));
 
+        public static readonly BindableProperty IsValidProperty =
+            BindableProperty.Create(nameof(IsValid), typeof(bool?), typeof(DropDownButton<T>), null, 
+                propertyChanged: OnValidationChanged);
+
         public static readonly BindableProperty ItemsSourceProperty =
-                            BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable<T>), typeof(DropDownButton<T>));
+                    BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable<T>), typeof(DropDownButton<T>));
 
         public static readonly BindableProperty ItemTemplateProperty =
             BindableProperty.Create(nameof(ItemTemplate), typeof(DataTemplate), typeof(DropDownButton<T>));
@@ -42,19 +50,40 @@ namespace CustomPicker.Components
             BindableProperty.Create(nameof(SelectedColor), typeof(Color), typeof(DropDownButton<T>), Colors.Green);
 
         public static readonly BindableProperty SelectedItemProperty =
-                BindableProperty.Create(nameof(SelectedItem), typeof(T), typeof(DropDownButton<T>),
+            BindableProperty.Create(nameof(SelectedItem), typeof(T), typeof(DropDownButton<T>),
                 defaultBindingMode: BindingMode.TwoWay, propertyChanged: OnSelectedItemChanged);
 
-        public ImageSource ClearButtonSource
+        public ImageSource CurrentValidationIcon => 
+            IsValid == true ? ClearValidIconSource : IsValid == false ? ClearInvalidIconSource : ClearUnknownIconSource;
+
+        public ImageSource ClearValidIconSource
         {
-            get => (ImageSource)GetValue(ClearButtonSourceProperty);
-            set => SetValue(ClearButtonSourceProperty, value);
+            get => (ImageSource)GetValue(ClearValidIconSourceProperty);
+            set => SetValue(ClearValidIconSourceProperty, value);
+        }
+
+        public ImageSource ClearInvalidIconSource
+        {
+            get => (ImageSource)GetValue(ClearInvalidIconSourceProperty);
+            set => SetValue(ClearInvalidIconSourceProperty, value);
+        }
+
+        public ImageSource ClearUnknownIconSource
+        {
+            get => (ImageSource)GetValue(ClearUnknownIconSourceProperty);
+            set => SetValue(ClearUnknownIconSourceProperty, value);
         }
 
         public string DisplayMember
         {
             get => (string)GetValue(DisplayMemberProperty);
             set => SetValue(DisplayMemberProperty, value);
+        }
+
+        public bool? IsValid
+        {
+            get => (bool?)GetValue(IsValidProperty);
+            set => SetValue(IsValidProperty, value);
         }
 
         public IEnumerable<T> ItemsSource
@@ -131,7 +160,7 @@ namespace CustomPicker.Components
                 IsVisible = false
             };
 
-            _clearButton.SetBinding(Image.SourceProperty, new Binding(nameof(ClearButtonSource), source: this));
+            _clearButton.SetBinding(Image.SourceProperty, new Binding(nameof(CurrentValidationIcon), source: this));
 
             _clearButton.Clicked += (s, e) =>
             {
@@ -157,7 +186,7 @@ namespace CustomPicker.Components
             {
                 Stroke = Colors.Gray,
                 StrokeThickness = 1,
-                Padding = new Thickness(0, 5, 5, 5),
+                Padding = new Thickness(5, 5, 5, 5),
                 StrokeShape = new RoundRectangle { CornerRadius = 10 },
                 Content = grid
             };
@@ -190,12 +219,28 @@ namespace CustomPicker.Components
             Content = _border;
         }
 
+        private static void OnValidationChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is DropDownButton<T> control)
+                control.UpdateClearButtonIcon();
+        }
+
+        private void UpdateClearButtonIcon()
+        {
+            var icon = IsValid switch
+            {
+                true => ClearValidIconSource,
+                false => ClearInvalidIconSource,
+                _ => ClearUnknownIconSource
+            };
+
+            _clearButton.Source = icon;
+        }
+
         private static void OnSelectedItemChanged(BindableObject bindable, object oldValue, object newValue)
         {
             if (bindable is DropDownButton<T> control)
-            {
                 control.UpdateVisuals();
-            }
         }
 
         private async Task AnimateRequiredPulse()
@@ -215,6 +260,8 @@ namespace CustomPicker.Components
                 _border.Stroke = RequiredColor;
                 _clearButton.IsVisible = false;
 
+                IsValid = false;
+
                 if (!_hasPulsedRequired)
                 {
                     _hasPulsedRequired = true;
@@ -227,6 +274,8 @@ namespace CustomPicker.Components
                 _label.TextColor = PlaceholderColor;
                 _border.Stroke = PlaceholderColor;
                 _clearButton.IsVisible = false;
+
+                IsValid = null;
             }
             else
             {
@@ -241,6 +290,8 @@ namespace CustomPicker.Components
 
                 // Reset pulse state when a valid selection is made
                 _hasPulsedRequired = false;
+
+                IsValid = true;
             }
         }
     }
