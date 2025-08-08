@@ -15,10 +15,6 @@ namespace CustomPicker.Components
     {
         #region Bindle Properties
 
-        public static readonly BindableProperty ClearValidIconSourceProperty =
-            BindableProperty.Create(nameof(EntryBox), typeof(ImageSource), typeof(EntryBox),
-                ImageSource.FromFile("clear_icon_valid.png"));
-
         public static readonly BindableProperty ClearInvalidIconSourceProperty =
             BindableProperty.Create(nameof(EntryBox), typeof(ImageSource), typeof(EntryBox),
                 ImageSource.FromFile("clear_icon_invalid.png"));
@@ -27,12 +23,29 @@ namespace CustomPicker.Components
             BindableProperty.Create(nameof(EntryBox), typeof(ImageSource), typeof(EntryBox),
                 ImageSource.FromFile("clear_icon_unknown.png"));
 
+        public static readonly BindableProperty ClearValidIconSourceProperty =
+                            BindableProperty.Create(nameof(EntryBox), typeof(ImageSource), typeof(EntryBox),
+                ImageSource.FromFile("clear_icon_valid.png"));
+
         public static readonly BindableProperty IsValidProperty =
             BindableProperty.Create(nameof(IsValid), typeof(bool?), typeof(EntryBox),
                 null, BindingMode.OneWayToSource);
 
+        public static readonly BindableProperty MaximumHeightProperty =
+            BindableProperty.Create(nameof(MaximumHeight), typeof(double), typeof(EntryBox), 100.0);
+
+        public static readonly BindableProperty MaxLengthProperty =
+            BindableProperty.Create(nameof(MaxLength), typeof(int), typeof(EntryBox), int.MaxValue);
+
+        public static readonly BindableProperty MinimumHeightProperty =
+            BindableProperty.Create(nameof(MinimumHeight), typeof(double), typeof(EntryBox), 40.0);
+
+        public static readonly BindableProperty MultilineProperty =
+            BindableProperty.Create(nameof(Multiline), typeof(bool), typeof(EntryBox), false,
+                propertyChanged: OnMultilineChanged);
+
         public static readonly BindableProperty MustNotEmptyProperty =
-            BindableProperty.Create( nameof(MustNotEmpty), typeof(bool), typeof(EntryBox),
+            BindableProperty.Create(nameof(MustNotEmpty), typeof(bool), typeof(EntryBox),
                 false, propertyChanged: OnMustNotEmptyChanged);
 
         public static readonly BindableProperty PlaceholderColorProperty =
@@ -44,92 +57,32 @@ namespace CustomPicker.Components
         public static readonly BindableProperty RequiredColorProperty =
             BindableProperty.Create(nameof(RequiredColor), typeof(Color), typeof(EntryBox), Colors.Red);
 
+        public static readonly BindableProperty RightImageCommandParameterProperty =
+            BindableProperty.Create(nameof(RightImageCommandParameter), typeof(object), typeof(EntryBox));
+
+        public static readonly BindableProperty RightImageCommandProperty =
+            BindableProperty.Create(nameof(RightImageCommand), typeof(ICommand), typeof(EntryBox));
+
+        public static readonly BindableProperty RightImageSourceProperty =
+            BindableProperty.Create(nameof(RightImageSource), typeof(ImageSource), typeof(EntryBox),
+                default(ImageSource), propertyChanged: OnRightImageSourceChanged);
+
         public static readonly BindableProperty SelectedColorProperty =
             BindableProperty.Create(nameof(SelectedColor), typeof(Color), typeof(EntryBox), Colors.Green);
 
+        public static readonly BindableProperty ShowCharacterCountProperty =
+            BindableProperty.Create(nameof(ShowCharacterCount), typeof(bool), typeof(EntryBox), false,
+                propertyChanged: OnShowCharacterCountChanged);
+
         public static readonly BindableProperty TextProperty =
-            BindableProperty.Create(nameof(Text), typeof(string), typeof(EntryBox), default(string), BindingMode.TwoWay, 
+            BindableProperty.Create(nameof(Text), typeof(string), typeof(EntryBox), default(string), BindingMode.TwoWay,
                 propertyChanged: OnTextChanged);
 
         public static readonly BindableProperty ValidationRuleProperty =
             BindableProperty.Create(nameof(ValidationRule), typeof(Func<string, bool>), typeof(EntryBox),
                 null, propertyChanged: OnValidationRuleChanged);
 
-        public static readonly BindableProperty RightImageSourceProperty =
-            BindableProperty.Create(nameof(RightImageSource), typeof(ImageSource), typeof(EntryBox), 
-                default(ImageSource), propertyChanged: OnRightImageSourceChanged);
-
-        public static readonly BindableProperty RightImageCommandProperty =
-            BindableProperty.Create(nameof(RightImageCommand), typeof(ICommand), typeof(EntryBox));
-
-        public static readonly BindableProperty RightImageCommandParameterProperty =
-            BindableProperty.Create(nameof(RightImageCommandParameter), typeof(object), typeof(EntryBox));
-
-        public static readonly BindableProperty MultilineProperty =
-            BindableProperty.Create(nameof(Multiline), typeof(bool), typeof(EntryBox), false,
-                propertyChanged: OnMultilineChanged);
-
-        public static readonly BindableProperty ShowCharacterCountProperty =
-            BindableProperty.Create(nameof(ShowCharacterCount), typeof(bool), typeof(EntryBox), false,
-                propertyChanged: OnShowCharacterCountChanged);
-
-        public static readonly BindableProperty MinimumHeightProperty =
-            BindableProperty.Create(nameof(MinimumHeight), typeof(double), typeof(EntryBox), 40.0);
-
-        public static readonly BindableProperty MaximumHeightProperty =
-            BindableProperty.Create(nameof(MaximumHeight), typeof(double), typeof(EntryBox), 100.0);
-
-        public double MinimumHeight
-        {
-            get => (double)GetValue(MinimumHeightProperty);
-            set => SetValue(MinimumHeightProperty, value);
-        }
-
-        public double MaximumHeight
-        {
-            get => (double)GetValue(MaximumHeightProperty);
-            set => SetValue(MaximumHeightProperty, value);
-        }
-
-
-        public bool ShowCharacterCount
-        {
-            get => (bool)GetValue(ShowCharacterCountProperty);
-            set => SetValue(ShowCharacterCountProperty, value);
-        }
-
-        public bool Multiline
-        {
-            get => (bool)GetValue(MultilineProperty);
-            set => SetValue(MultilineProperty, value);
-        }
-
-        public object RightImageCommandParameter
-        {
-            get => GetValue(RightImageCommandParameterProperty);
-            set => SetValue(RightImageCommandParameterProperty, value);
-        }
-
-        public ICommand RightImageCommand
-        {
-            get => (ICommand)GetValue(RightImageCommandProperty);
-            set => SetValue(RightImageCommandProperty, value);
-        }
-
-        public ImageSource RightImageSource
-        {
-            get => (ImageSource)GetValue(RightImageSourceProperty);
-            set => SetValue(RightImageSourceProperty, value);
-        }
-
-        public ImageSource CurrentValidationIcon =>
-            IsValid == true ? ClearValidIconSource : IsValid == false ? ClearInvalidIconSource : ClearUnknownIconSource;
-
-        public ImageSource ClearValidIconSource
-        {
-            get => (ImageSource)GetValue(ClearValidIconSourceProperty);
-            set => SetValue(ClearValidIconSourceProperty, value);
-        }
+        private bool? _isValid;
 
         public ImageSource ClearInvalidIconSource
         {
@@ -143,7 +96,15 @@ namespace CustomPicker.Components
             set => SetValue(ClearUnknownIconSourceProperty, value);
         }
 
-        private bool? _isValid;
+        public ImageSource ClearValidIconSource
+        {
+            get => (ImageSource)GetValue(ClearValidIconSourceProperty);
+            set => SetValue(ClearValidIconSourceProperty, value);
+        }
+
+        public ImageSource CurrentValidationIcon =>
+            IsValid == true ? ClearValidIconSource : IsValid == false ? ClearInvalidIconSource : ClearUnknownIconSource;
+
         public bool? IsValid
         {
             get => _isValid;
@@ -156,6 +117,30 @@ namespace CustomPicker.Components
                     OnPropertyChanged(nameof(CurrentValidationIcon));
                 }
             }
+        }
+
+        public double MaximumHeight
+        {
+            get => (double)GetValue(MaximumHeightProperty);
+            set => SetValue(MaximumHeightProperty, value);
+        }
+
+        public int MaxLength
+        {
+            get => (int)GetValue(MaxLengthProperty);
+            set => SetValue(MaxLengthProperty, value);
+        }
+
+        public double MinimumHeight
+        {
+            get => (double)GetValue(MinimumHeightProperty);
+            set => SetValue(MinimumHeightProperty, value);
+        }
+
+        public bool Multiline
+        {
+            get => (bool)GetValue(MultilineProperty);
+            set => SetValue(MultilineProperty, value);
         }
 
         public bool MustNotEmpty
@@ -182,10 +167,34 @@ namespace CustomPicker.Components
             set => SetValue(RequiredColorProperty, value);
         }
 
+        public ICommand RightImageCommand
+        {
+            get => (ICommand)GetValue(RightImageCommandProperty);
+            set => SetValue(RightImageCommandProperty, value);
+        }
+
+        public object RightImageCommandParameter
+        {
+            get => GetValue(RightImageCommandParameterProperty);
+            set => SetValue(RightImageCommandParameterProperty, value);
+        }
+
+        public ImageSource RightImageSource
+        {
+            get => (ImageSource)GetValue(RightImageSourceProperty);
+            set => SetValue(RightImageSourceProperty, value);
+        }
+
         public Color SelectedColor
         {
             get => (Color)GetValue(SelectedColorProperty);
             set => SetValue(SelectedColorProperty, value);
+        }
+
+        public bool ShowCharacterCount
+        {
+            get => (bool)GetValue(ShowCharacterCountProperty);
+            set => SetValue(ShowCharacterCountProperty, value);
         }
 
         public string Text
@@ -204,26 +213,26 @@ namespace CustomPicker.Components
 
         #region Variables
 
-        private readonly Grid _grid;
         private readonly Border _border;
-        private readonly ImageButton _clearButton;
-        private readonly ImageButton _rightImageButton;
         private readonly Label _characterCountLabel;
+        private readonly ImageButton _clearButton;
+        private readonly Grid _grid;
+        private readonly ImageButton _rightImageButton;
         private readonly VerticalStackLayout _verticalLayout;
 
-        private Entry _entry;
         private Editor _editor;
-        private View _inputControl => Multiline ? _editor : _entry;
-
+        private Entry _entry;
         private bool _hasPulsedRequired = false;
         private bool _wasCleared = false;
+        private View _inputControl => Multiline ? _editor : _entry;
 
         #endregion Variables
+
         #region Events
 
         public event EventHandler RightImageClicked;
 
-        #endregion
+        #endregion Events
 
         public EntryBox()
         {
@@ -237,6 +246,7 @@ namespace CustomPicker.Components
                 IsVisible = true
             };
             _entry.HandlerChanged += (s, e) => UpdateCursorColor(null);
+            _entry.SetBinding(Entry.MaxLengthProperty, new Binding(nameof(MaxLength), source: this));
             _entry.SetBinding(Entry.TextProperty, new Binding(nameof(Text), source: this, mode: BindingMode.TwoWay));
             _entry.TextChanged += (s, e) =>
             {
@@ -253,10 +263,11 @@ namespace CustomPicker.Components
                 Text = "0 characters",
                 Margin = new Thickness(5, 0, 0, 0)
             };
-            _characterCountLabel.SetBinding(Label.IsVisibleProperty, new Binding(nameof(ShowCharacterCount), 
+            _characterCountLabel.SetBinding(Label.IsVisibleProperty, new Binding(nameof(ShowCharacterCount),
                 source: this, mode: BindingMode.TwoWay));
 
-            _editor = new Editor { 
+            _editor = new Editor
+            {
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.Start,
                 BackgroundColor = Colors.Transparent,
@@ -264,6 +275,7 @@ namespace CustomPicker.Components
                 IsVisible = false
             };
             _editor.HandlerChanged += (s, e) => UpdateCursorColor(null);
+            _editor.SetBinding(Editor.MaxLengthProperty, new Binding(nameof(MaxLength), source: this));
             _editor.SetBinding(Editor.TextProperty, new Binding(nameof(Text), source: this, mode: BindingMode.TwoWay));
             _editor.TextChanged += (s, e) =>
             {
@@ -281,7 +293,7 @@ namespace CustomPicker.Components
                 BackgroundColor = Colors.Transparent,
                 WidthRequest = 10,
                 HeightRequest = 10,
-                Padding = new Thickness(10,10,0,10),
+                Padding = new Thickness(10, 10, 0, 10),
                 HorizontalOptions = LayoutOptions.End,
                 VerticalOptions = LayoutOptions.Start
             };
@@ -355,7 +367,54 @@ namespace CustomPicker.Components
             UpdateVisuals();
         }
 
-        double GetPlatformLineHeight()
+        protected virtual void OnRightImageClicked()
+        {
+            RightImageClicked?.Invoke(this, EventArgs.Empty);
+        }
+
+        private static void OnMultilineChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox box)
+                box.SwitchInputControl();
+        }
+
+        private static void OnMustNotEmptyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox control)
+                control.UpdateVisuals();
+        }
+
+        private static void OnRightImageSourceChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox box)
+                box.UpdateVisuals();
+        }
+
+        private static void OnShowCharacterCountChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox box)
+                box.SwitchInputControl();
+        }
+
+        private static void OnTextChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox box)
+                box.UpdateVisuals();
+        }
+
+        private static void OnValidationRuleChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox entryBox)
+                entryBox.UpdateVisuals();
+        }
+
+        private async Task AnimateRequiredPulse()
+        {
+            await _border.ScaleTo(1.05, 150, Easing.CubicOut);
+            await _border.ScaleTo(1.0, 150, Easing.CubicIn);
+        }
+
+        private double GetPlatformLineHeight()
         {
             if (DeviceInfo.Platform == DevicePlatform.macOS)
                 return 22;
@@ -366,24 +425,6 @@ namespace CustomPicker.Components
             if (DeviceInfo.Platform == DevicePlatform.WinUI)
                 return 24;
             return 20; // Default fallback
-        }
-
-        private static void OnMustNotEmptyChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is EntryBox control)
-                control.UpdateVisuals();
-        }
-
-        private static void OnMultilineChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is EntryBox box)
-                box.SwitchInputControl();
-        }
-
-        private static void OnShowCharacterCountChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is EntryBox box)
-                box.SwitchInputControl();
         }
 
         private void SwitchInputControl()
@@ -406,35 +447,6 @@ namespace CustomPicker.Components
             UpdateVisuals();
         }
 
-        protected virtual void OnRightImageClicked()
-        {
-            RightImageClicked?.Invoke(this, EventArgs.Empty);
-        }
-
-        private static void OnRightImageSourceChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is EntryBox box)
-                box.UpdateVisuals();
-        }
-
-        private static void OnTextChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is EntryBox box)
-                box.UpdateVisuals();
-        }
-
-        private static void OnValidationRuleChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is EntryBox entryBox)
-                entryBox.UpdateVisuals();
-        }
-
-        private async Task AnimateRequiredPulse()
-        {
-            await _border.ScaleTo(1.05, 150, Easing.CubicOut);
-            await _border.ScaleTo(1.0, 150, Easing.CubicIn);
-        }
-
         private void UpdateCursorColor(Color? color)
         {
             if (color == null)
@@ -447,10 +459,10 @@ namespace CustomPicker.Components
                 editText.TextCursorDrawable?.SetTint(color.ToInt());
             }
 #elif IOS
-    if (_entry.Handler is EntryHandler handler)
-    {
-        handler.PlatformView.TintColor = color.ToPlatform();
-    }
+            if (_entry.Handler is EntryHandler handler)
+            {
+                handler.PlatformView.TintColor = color.ToPlatform();
+            }
 #elif WINDOWS
     if (_entry.Handler is EntryHandler handler)
     {
