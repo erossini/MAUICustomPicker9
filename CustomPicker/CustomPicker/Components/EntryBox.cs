@@ -65,6 +65,45 @@ namespace CustomPicker.Components
         public static readonly BindableProperty RightImageCommandParameterProperty =
             BindableProperty.Create(nameof(RightImageCommandParameter), typeof(object), typeof(EntryBox));
 
+        public static readonly BindableProperty MultilineProperty =
+            BindableProperty.Create(nameof(Multiline), typeof(bool), typeof(EntryBox), false,
+                propertyChanged: OnMultilineChanged);
+
+        public static readonly BindableProperty ShowCharacterCountProperty =
+            BindableProperty.Create(nameof(ShowCharacterCount), typeof(bool), typeof(EntryBox), false,
+                propertyChanged: OnShowCharacterCountChanged);
+
+        public static readonly BindableProperty MinimumHeightProperty =
+            BindableProperty.Create(nameof(MinimumHeight), typeof(double), typeof(EntryBox), 40.0);
+
+        public static readonly BindableProperty MaximumHeightProperty =
+            BindableProperty.Create(nameof(MaximumHeight), typeof(double), typeof(EntryBox), 100.0);
+
+        public double MinimumHeight
+        {
+            get => (double)GetValue(MinimumHeightProperty);
+            set => SetValue(MinimumHeightProperty, value);
+        }
+
+        public double MaximumHeight
+        {
+            get => (double)GetValue(MaximumHeightProperty);
+            set => SetValue(MaximumHeightProperty, value);
+        }
+
+
+        public bool ShowCharacterCount
+        {
+            get => (bool)GetValue(ShowCharacterCountProperty);
+            set => SetValue(ShowCharacterCountProperty, value);
+        }
+
+        public bool Multiline
+        {
+            get => (bool)GetValue(MultilineProperty);
+            set => SetValue(MultilineProperty, value);
+        }
+
         public object RightImageCommandParameter
         {
             get => GetValue(RightImageCommandParameterProperty);
@@ -168,8 +207,13 @@ namespace CustomPicker.Components
         private readonly Grid _grid;
         private readonly Border _border;
         private readonly ImageButton _clearButton;
-        private readonly Entry _entry;
         private readonly ImageButton _rightImageButton;
+        private readonly Label _characterCountLabel;
+        private readonly VerticalStackLayout _verticalLayout;
+
+        private Entry _entry;
+        private Editor _editor;
+        private View _inputControl => Multiline ? _editor : _entry;
 
         private bool _hasPulsedRequired = false;
         private bool _wasCleared = false;
@@ -189,13 +233,44 @@ namespace CustomPicker.Components
                 VerticalOptions = LayoutOptions.Center,
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 BackgroundColor = Colors.Transparent,
-                Margin = new Thickness(3, 0, 0, 0)
+                Margin = new Thickness(3, 0, 0, 0),
+                IsVisible = true
             };
             _entry.HandlerChanged += (s, e) => UpdateCursorColor(null);
             _entry.SetBinding(Entry.TextProperty, new Binding(nameof(Text), source: this, mode: BindingMode.TwoWay));
             _entry.TextChanged += (s, e) =>
             {
                 RightImageCommandParameter = e.NewTextValue;
+                _wasCleared = false;
+                UpdateVisuals();
+            };
+
+            _characterCountLabel = new Label
+            {
+                FontSize = 12,
+                HorizontalOptions = LayoutOptions.Start,
+                TextColor = Colors.Gray,
+                Text = "0 characters",
+                Margin = new Thickness(5, 0, 0, 0)
+            };
+            _characterCountLabel.SetBinding(Label.IsVisibleProperty, new Binding(nameof(ShowCharacterCount), 
+                source: this, mode: BindingMode.TwoWay));
+
+            _editor = new Editor { 
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.Start,
+                BackgroundColor = Colors.Transparent,
+                Margin = new Thickness(3, 0, 0, 0),
+                IsVisible = false
+            };
+            _editor.HandlerChanged += (s, e) => UpdateCursorColor(null);
+            _editor.SetBinding(Editor.TextProperty, new Binding(nameof(Text), source: this, mode: BindingMode.TwoWay));
+            _editor.TextChanged += (s, e) =>
+            {
+                RightImageCommandParameter = e.NewTextValue;
+
+                _characterCountLabel.Text = $"{_editor.Text?.Length ?? 0} characters";
+                _characterCountLabel.IsVisible = ShowCharacterCount;
 
                 _wasCleared = false;
                 UpdateVisuals();
@@ -208,7 +283,7 @@ namespace CustomPicker.Components
                 HeightRequest = 10,
                 Padding = new Thickness(10,10,0,10),
                 HorizontalOptions = LayoutOptions.End,
-                VerticalOptions = LayoutOptions.Center
+                VerticalOptions = LayoutOptions.Start
             };
             _clearButton.SetBinding(Image.SourceProperty, new Binding(nameof(CurrentValidationIcon), source: this));
             _clearButton.Clicked += (s, e) =>
@@ -222,7 +297,7 @@ namespace CustomPicker.Components
             {
                 BackgroundColor = Colors.Transparent,
                 HorizontalOptions = LayoutOptions.End,
-                VerticalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Start,
                 WidthRequest = 10,
                 HeightRequest = 10,
                 Padding = new Thickness(0, 10, 0, 10),
@@ -249,7 +324,22 @@ namespace CustomPicker.Components
                 HeightRequest = 40
             };
 
-            _grid.Add(_entry, 0, 0);
+            _verticalLayout = new VerticalStackLayout
+            {
+                Spacing = 4,
+                Padding = new Thickness(0),
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            _verticalLayout.Children.Add(Multiline ? _editor : _entry);
+            if (ShowCharacterCount)
+            {
+                _characterCountLabel.IsVisible = true;
+                _verticalLayout.Children.Add(_characterCountLabel);
+            }
+
+            _grid.Add(_verticalLayout, 0, 0);
             _grid.Add(_clearButton, 1, 0);
 
             _border = new Border
@@ -265,10 +355,55 @@ namespace CustomPicker.Components
             UpdateVisuals();
         }
 
+        double GetPlatformLineHeight()
+        {
+            if (DeviceInfo.Platform == DevicePlatform.macOS)
+                return 22;
+            if (DeviceInfo.Platform == DevicePlatform.iOS)
+                return 22;
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+                return 20;
+            if (DeviceInfo.Platform == DevicePlatform.WinUI)
+                return 24;
+            return 20; // Default fallback
+        }
+
         private static void OnMustNotEmptyChanged(BindableObject bindable, object oldValue, object newValue)
         {
             if (bindable is EntryBox control)
                 control.UpdateVisuals();
+        }
+
+        private static void OnMultilineChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox box)
+                box.SwitchInputControl();
+        }
+
+        private static void OnShowCharacterCountChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox box)
+                box.SwitchInputControl();
+        }
+
+        private void SwitchInputControl()
+        {
+            if (_entry == null || _editor == null || _grid == null)
+                return;
+
+            _verticalLayout.Children.Clear();
+            _verticalLayout.Children.Add(Multiline ? _editor : _entry);
+
+            _entry.IsVisible = !Multiline;
+            _editor.IsVisible = Multiline;
+
+            if (ShowCharacterCount)
+            {
+                _characterCountLabel.IsVisible = true;
+                _verticalLayout.Children.Add(_characterCountLabel);
+            }
+
+            UpdateVisuals();
         }
 
         protected virtual void OnRightImageClicked()
@@ -336,9 +471,19 @@ namespace CustomPicker.Components
                 ? (isValid ? SelectedColor : RequiredColor)
                 : (hasText ? SelectedColor : PlaceholderColor);
 
-            _entry.Placeholder = PlaceholderText;
-            _entry.PlaceholderColor = currentColor;
-            _entry.TextColor = currentColor;
+            var input = _inputControl;
+            if (input is Entry entry)
+            {
+                entry.Placeholder = PlaceholderText;
+                entry.PlaceholderColor = currentColor;
+                entry.TextColor = currentColor;
+            }
+            else if (input is Editor editor)
+            {
+                editor.TextColor = currentColor;
+                editor.HeightRequest = MaximumHeight - (ShowCharacterCount ? GetPlatformLineHeight() : 0);
+            }
+
             _border.Stroke = currentColor;
 
             _clearButton.Opacity = hasText ? 1 : 0;
@@ -354,6 +499,9 @@ namespace CustomPicker.Components
             _rightImageButton.Opacity = RightImageSource != null ? 1 : 0;
             _rightImageButton.IsEnabled = IsValid == true;
             _rightImageButton.Opacity = IsValid == true ? 1 : 0.5;
+
+            _grid.HeightRequest = Multiline ? MaximumHeight : MinimumHeight;
+            _grid.MaximumHeightRequest = Multiline ? MaximumHeight : MinimumHeight;
 
             UpdateCursorColor(currentColor);
 

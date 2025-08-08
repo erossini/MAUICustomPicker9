@@ -21,6 +21,31 @@ namespace CustomPicker
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            builder.ConfigureMauiHandlers(handlers =>
+            {
+                handlers.AddHandler<Editor, EditorHandler>();
+
+                // Android
+                handlers.TryAddHandler<Editor, EditorHandler>();
+                Microsoft.Maui.Handlers.EditorHandler.Mapper.AppendToMapping("NoBorder", (handler, view) =>
+                {
+#if ANDROID
+        handler.PlatformView.Background = null;
+        handler.PlatformView.SetBackgroundColor(Android.Graphics.Color.Transparent);
+        handler.PlatformView.SetPadding(0, 0, 0, 0);
+#endif
+#if IOS
+                    handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
+                    handler.PlatformView.BorderStyle = UIKit.UITextViewBorderStyle.None;
+#endif
+#if WINDOWS
+        handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+        handler.PlatformView.Background = null;
+#endif
+                });
+            });
+
+
             // Remove border for custom Entry on each platform
             EntryHandler.Mapper.AppendToMapping(nameof(BorderlessEntry), (handler, view) =>
             {
