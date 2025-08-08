@@ -1,12 +1,13 @@
 ﻿using CommunityToolkit.Maui.Extensions;
 using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Handlers;
+using Microsoft.Maui.Platform;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Maui.Handlers;
-using Microsoft.Maui.Platform;
+using System.Windows.Input;
 
 namespace CustomPicker.Components
 {
@@ -53,6 +54,34 @@ namespace CustomPicker.Components
         public static readonly BindableProperty ValidationRuleProperty =
             BindableProperty.Create(nameof(ValidationRule), typeof(Func<string, bool>), typeof(EntryBox),
                 null, propertyChanged: OnValidationRuleChanged);
+
+        public static readonly BindableProperty RightImageSourceProperty =
+            BindableProperty.Create(nameof(RightImageSource), typeof(ImageSource), typeof(EntryBox), 
+                default(ImageSource), propertyChanged: OnRightImageSourceChanged);
+
+        public static readonly BindableProperty RightImageCommandProperty =
+            BindableProperty.Create(nameof(RightImageCommand), typeof(ICommand), typeof(EntryBox));
+
+        public static readonly BindableProperty RightImageCommandParameterProperty =
+            BindableProperty.Create(nameof(RightImageCommandParameter), typeof(object), typeof(EntryBox));
+
+        public object RightImageCommandParameter
+        {
+            get => GetValue(RightImageCommandParameterProperty);
+            set => SetValue(RightImageCommandParameterProperty, value);
+        }
+
+        public ICommand RightImageCommand
+        {
+            get => (ICommand)GetValue(RightImageCommandProperty);
+            set => SetValue(RightImageCommandProperty, value);
+        }
+
+        public ImageSource RightImageSource
+        {
+            get => (ImageSource)GetValue(RightImageSourceProperty);
+            set => SetValue(RightImageSourceProperty, value);
+        }
 
         public ImageSource CurrentValidationIcon =>
             IsValid == true ? ClearValidIconSource : IsValid == false ? ClearInvalidIconSource : ClearUnknownIconSource;
@@ -136,13 +165,21 @@ namespace CustomPicker.Components
 
         #region Variables
 
+        private readonly Grid _grid;
         private readonly Border _border;
         private readonly ImageButton _clearButton;
         private readonly Entry _entry;
+        private readonly ImageButton _rightImageButton;
+
         private bool _hasPulsedRequired = false;
         private bool _wasCleared = false;
 
         #endregion Variables
+        #region Events
+
+        public event EventHandler RightImageClicked;
+
+        #endregion
 
         public EntryBox()
         {
@@ -158,6 +195,8 @@ namespace CustomPicker.Components
             _entry.SetBinding(Entry.TextProperty, new Binding(nameof(Text), source: this, mode: BindingMode.TwoWay));
             _entry.TextChanged += (s, e) =>
             {
+                RightImageCommandParameter = e.NewTextValue;
+
                 _wasCleared = false;
                 UpdateVisuals();
             };
@@ -167,7 +206,7 @@ namespace CustomPicker.Components
                 BackgroundColor = Colors.Transparent,
                 WidthRequest = 10,
                 HeightRequest = 10,
-                Padding = 10,
+                Padding = new Thickness(10,10,0,10),
                 HorizontalOptions = LayoutOptions.End,
                 VerticalOptions = LayoutOptions.Center
             };
@@ -179,18 +218,39 @@ namespace CustomPicker.Components
                 UpdateVisuals();
             };
 
-            var grid = new Grid
+            _rightImageButton = new ImageButton
+            {
+                BackgroundColor = Colors.Transparent,
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.Center,
+                WidthRequest = 10,
+                HeightRequest = 10,
+                Padding = new Thickness(0, 10, 0, 10),
+                Margin = new Thickness(5, 0),
+                Opacity = 0.5
+            };
+            _rightImageButton.Clicked += (s, e) =>
+            {
+                var parameter = RightImageCommandParameter ?? _entry?.Text;
+                if (RightImageCommand?.CanExecute(parameter) == true)
+                    RightImageCommand.Execute(parameter);
+
+                OnRightImageClicked();
+            };
+
+            _grid = new Grid
             {
                 ColumnDefinitions =
                 {
                     new ColumnDefinition { Width = GridLength.Star },
+                    new ColumnDefinition { Width = GridLength.Auto },
                     new ColumnDefinition { Width = GridLength.Auto }
                 },
                 HeightRequest = 40
             };
 
-            grid.Add(_entry, 0, 0);
-            grid.Add(_clearButton, 1, 0);
+            _grid.Add(_entry, 0, 0);
+            _grid.Add(_clearButton, 1, 0);
 
             _border = new Border
             {
@@ -198,7 +258,7 @@ namespace CustomPicker.Components
                 StrokeThickness = 1,
                 Padding = new Thickness(5, 5, 5, 5),
                 StrokeShape = new RoundRectangle { CornerRadius = 10 },
-                Content = grid
+                Content = _grid
             };
 
             Content = _border;
@@ -209,6 +269,17 @@ namespace CustomPicker.Components
         {
             if (bindable is EntryBox control)
                 control.UpdateVisuals();
+        }
+
+        protected virtual void OnRightImageClicked()
+        {
+            RightImageClicked?.Invoke(this, EventArgs.Empty);
+        }
+
+        private static void OnRightImageSourceChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is EntryBox box)
+                box.UpdateVisuals();
         }
 
         private static void OnTextChanged(BindableObject bindable, object oldValue, object newValue)
@@ -272,6 +343,17 @@ namespace CustomPicker.Components
 
             _clearButton.Opacity = hasText ? 1 : 0;
             _clearButton.InputTransparent = !hasText;
+
+            if (RightImageSource != null && !_grid.Children.Contains(_rightImageButton))
+            {
+                _rightImageButton.Source = RightImageSource;
+                _grid.Add(_rightImageButton, 2, 0);
+            }
+
+            _rightImageButton.Source = RightImageSource;
+            _rightImageButton.Opacity = RightImageSource != null ? 1 : 0;
+            _rightImageButton.IsEnabled = IsValid == true;
+            _rightImageButton.Opacity = IsValid == true ? 1 : 0.5;
 
             UpdateCursorColor(currentColor);
 

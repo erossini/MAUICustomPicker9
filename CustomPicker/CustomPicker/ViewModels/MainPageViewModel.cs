@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace CustomPicker.ViewModels
 {
@@ -41,6 +42,14 @@ namespace CustomPicker.ViewModels
                 // Example validation: check if the text is not empty
                 return !string.IsNullOrWhiteSpace(text) && text.Length >= 2;
             };
+        }
+
+        public ICommand RightImageCommand => new Command<string>(OnRightImageClicked);
+
+        private void OnRightImageClicked(string text)
+        {
+            // Use the text from EntryBox
+            Console.WriteLine($"User typed: {text}");
         }
     }
 }

@@ -130,6 +130,28 @@
 
 			<components:EntryBox MustNotEmpty="True" Text="{Binding SelectedText2}" />
 
+			<Label Text="Entry with validation and extra image">
+				<Label.Triggers>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference entryBox2}, Path=IsValid}" Value="True" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Green" />
+					</MultiTrigger>
+					<MultiTrigger TargetType="Label">
+						<MultiTrigger.Conditions>
+							<BindingCondition Binding="{Binding Source={x:Reference entryBox2}, Path=IsValid}" Value="False" />
+						</MultiTrigger.Conditions>
+						<Setter Property="BackgroundColor" Value="Red" />
+					</MultiTrigger>
+				</Label.Triggers>
+			</Label>
+			<components:EntryBox
+				x:Name="entryBox2"
+				RightImageCommand="{Binding RightImageCommand}"
+				RightImageSource="add.png"
+				ValidationRule="{Binding TextValidation}" />
+
 			<Label Text="Picker">
 				<Label.Triggers>
 					<MultiTrigger TargetType="Label">
