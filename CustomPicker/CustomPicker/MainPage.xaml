@@ -32,6 +32,8 @@
 				Style="{StaticResource SubHeadline}"
 				Text="Welcome to &#10;.NET Multi-platform App UI" />
 
+			<components:MenuListView ItemsSource="{Binding MenuOptions}" />
+
 			<Border
 				Padding="10"
 				Stroke="Gray"

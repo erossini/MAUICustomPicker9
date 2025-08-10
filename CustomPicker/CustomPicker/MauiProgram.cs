@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Core;
 using CustomPicker.Components;
+using CustomPicker.Interfaces;
+using CustomPicker.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
 
@@ -20,6 +22,8 @@ namespace CustomPicker
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
+            
+            builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
 
             builder.ConfigureMauiHandlers(handlers =>
             {

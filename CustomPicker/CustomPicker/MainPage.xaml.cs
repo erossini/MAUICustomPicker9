@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui.Extensions;
 using CustomPicker.Components;
+using CustomPicker.Interfaces;
 using CustomPicker.ViewModels;
 using System.Globalization;
 
@@ -10,11 +11,11 @@ namespace CustomPicker
         MainPageViewModel vm;
         int count = 0;
 
-        public MainPage()
+        public MainPage(INavigationService navigation)
         {
             InitializeComponent();
 
-            vm = new MainPageViewModel();
+            vm = new MainPageViewModel(navigation);
             BindingContext = vm;
         }
 

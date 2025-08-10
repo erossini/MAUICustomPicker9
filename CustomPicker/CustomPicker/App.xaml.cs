@@ -5,6 +5,8 @@
         public App()
         {
             InitializeComponent();
+
+            Routing.RegisterRoute(nameof(NavPage), typeof(NavPage));
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
